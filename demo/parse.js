@@ -34,7 +34,7 @@ console.log('Args:', parsed);
 console.log('Unnamed:', parsed._);
 console.log('Unknown:', parsed.$);
 console.log('Overflow:', parsed['--']);
-console.log('Invalid:');
+// console.log('Invalid:');
 // var invalid = Object.keys(parsed['?']);
 // for (var i = 0; i < invalid.length; i++) {
 // 	console.log('    ' + parsed['?'][invalid[i]]);
