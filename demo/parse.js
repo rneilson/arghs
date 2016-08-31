@@ -22,6 +22,7 @@ var parsed = require('../../arghs')({
 		'verbose': 'show parsed request parameters'
 	},
 	strict: {
+		named: true,
 		unnamed: false,
 		unknown: false,
 		invalid: true

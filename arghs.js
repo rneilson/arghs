@@ -23,28 +23,18 @@ function Arghs (config) {
 	this._help = false;
 	this._desc = {};
 	this._strict = {
+		named: false,
 		unnamed: false,
 		unknown: false,
 		invalid: false,
 	};
 
-	if (config.options) {
-		this.options(config.options);
-	}
-	if (config.named) {
-		this.named(config.named);
-	}
-	if (config.aliases) {
-		this.aliases(config.aliases);
-	}
-	if (config.usage) {
-		this.usage(config.usage);
-	}
-	if (config.help) {
-		this.help(config.help);
-	}
-	if (config.strict) {
-		this.strict(config.strict);
+	var sections = ['options', 'named', 'aliases', 'usage', 'help', 'strict'];
+	for (var i = 0; i < sections.length; i++) {
+		var section = sections[i];
+		if (config[section]) {
+			this[section](config[section]);
+		}
 	}
 }
 
@@ -232,6 +222,7 @@ Arghs.prototype._makeHelp = function (descobj) {
 Arghs.prototype.strict = function (restrict) {
 	if (restrict === undefined) {
 		restrict = {
+			named: true,
 			unnamed: true,
 			unknown: true,
 			invalid: true
@@ -240,6 +231,7 @@ Arghs.prototype.strict = function (restrict) {
 	else if (restrict === null || typeof restrict !== 'object') {
 		throw new Error("'strict' must be an object or undefined");
 	}
+	this._strict.named = (restrict.named === true) ? true : false;
 	this._strict.unnamed = (restrict.unnamed === true) ? true : false;
 	this._strict.unknown = (restrict.unknown === true) ? true : false;
 	this._strict.invalid = (restrict.invalid === true) ? true : false;
@@ -433,10 +425,12 @@ Arghs.prototype.parse = function (argv) {
 	}
 
 	// Set named args
+	arg = 0;
 	for (var j = 0; j < this._named.length; j++) {
 		if (parsed._.length > 0) {
 			// Pull named arg from positional args, put in parsed object
 			parsed[this._named[j]] = parsed._.shift();
+			arg++;
 		}
 		else {
 			// Explicitly include named args in parsed object
@@ -447,6 +441,11 @@ Arghs.prototype.parse = function (argv) {
 	// Check for unnamed args in strict mode
 	if (parsed._.length > 0 && this._strict.unnamed) {
 		this.exitWith('Received too many arguments: expected ' + this._named.length + ', got ' + (this._named.length + parsed._.length));
+	}
+
+	// Check for too few named args in strict mode
+	if (this._strict.named && arg < this._named.length) {
+		this.exitWith('Received too few arguments: expected ' + this._named.length + ', got ' + arg);
 	}
 
 	// Print help string and exit if help enabled
