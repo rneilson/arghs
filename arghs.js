@@ -438,6 +438,11 @@ Arghs.prototype.parse = function (argv) {
 		}
 	}
 
+	// Print help string and exit if help enabled
+	if (parsed.help && this._help) {
+		this.exitWith(true);
+	}
+
 	// Check for unnamed args in strict mode
 	if (parsed._.length > 0 && this._strict.unnamed) {
 		this.exitWith('Received too many arguments: expected ' + this._named.length + ', got ' + (this._named.length + parsed._.length));
@@ -446,11 +451,6 @@ Arghs.prototype.parse = function (argv) {
 	// Check for too few named args in strict mode
 	if (this._strict.named && arg < this._named.length) {
 		this.exitWith('Received too few arguments: expected ' + this._named.length + ', got ' + arg);
-	}
-
-	// Print help string and exit if help enabled
-	if (parsed.help && this._help) {
-		this.exitWith(true);
 	}
 
 	return parsed;
