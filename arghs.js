@@ -34,7 +34,7 @@ function Arghs (config) {
 	// Default to basic, unadorned usage
 	this.usage('Usage: $0 $1 [OPTIONS...]');
 
-	var sections = ['options', 'named', 'aliases', 'usage', 'help', 'strict'];
+	var sections = ['options', 'named', 'aliases', 'compound', 'usage', 'help', 'strict'];
 	for (var i = 0; i < sections.length; i++) {
 		var section = sections[i];
 		if (config[section]) {
