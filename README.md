@@ -17,8 +17,8 @@ It won't cook breakfast for you, though — you're on your own there.
 var parsed = require('arghs')
   .named(['path', 'dest'])
   .options({
-    'id': 'array',
-    'num': 'string',
+    'id': ['array', 'id'],
+    'num': ['string', 'n'],
     'post': 'bool',
     'verbose': 'count',
   })
@@ -59,8 +59,8 @@ console.log('Overflow:', parsed['--']);
 var parsed = require('arghs')({
 	named: ['path', 'dest'],
 	options: {
-		'id': 'array',
-		'num': 'string',
+    'id': ['array', 'id'],
+    'num': ['string', 'n'],
 		'post': 'bool',
 		'verbose': 'count',
 	},
@@ -119,8 +119,8 @@ Parse args and display, with PATH and DEST as just...things
 
 Options:
   -h, --help     show this help message and exit
-  -i, --id       use item id(s) for request
-  -n, --num      number of items to retrieve
+  -i, --id <id>  use item id(s) for request
+  -n, --num <n>  number of items to retrieve
   -p, --post     send POST request instead of GET
   -v, --verbose  show parsed request parameters
 ```
