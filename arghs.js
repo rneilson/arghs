@@ -155,6 +155,7 @@ Arghs.prototype.compound = function (caser) {
 		default:
 			throw new Error("'compound' must be one of 'camelCase', 'snake_case', or 'none'");
 	}
+	return this;
 }
 
 Arghs.prototype.usage = function (usagestr) {
