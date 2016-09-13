@@ -192,9 +192,10 @@ Arghs.prototype._makeHelp = function (descobj) {
 		opt = keys[i];
 		ostr = opt;
 		// Add parameter name if string/array
-		if (this._options[opt] === OPT_STRING || this._options[opt] === OPT_ARRAY) {
+		if (this._pnames.hasOwnProperty(opt)) {
 			ostr += ' <' + this._pnames[opt] + '>';
 		}
+		// Construct option string
 		if (aliases.hasOwnProperty(opt)) {
 			str = prefix + '-' + aliases[opt] + ', --' + ostr;
 		}
