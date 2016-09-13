@@ -17,21 +17,27 @@ It won't cook breakfast for you, though — you're on your own there.
 var parsed = require('arghs')
   .named(['path', 'dest'])
   .options({
+    'default-user': 'bool',
     'id': ['array', 'id'],
     'num': ['string', 'n'],
     'post': 'bool',
+    'user-id': 'string',
     'verbose': 'count',
   })
   .aliases({
+    'd': 'default-user',
     'i': 'id',
     'n': 'num',
     'p': 'post',
+    'u': 'user-id',
     'v': 'verbose'
   })
   .help({
+    'default-user': 'use default user for request',
     'id': 'use item id(s) for request',
     'num': 'number of items to retrieve',
     'post': 'send POST request instead of GET',
+    'user-id': 'use this user id for request',
     'verbose': 'show parsed request parameters'
   })
   .strict({
@@ -57,32 +63,38 @@ console.log('Overflow:', parsed['--']);
 'use strict';
 
 var parsed = require('arghs')({
-	named: ['path', 'dest'],
-	options: {
+  named: ['path', 'dest'],
+  options: {
+    'default-user': 'bool',
     'id': ['array', 'id'],
     'num': ['string', 'n'],
-		'post': 'bool',
-		'verbose': 'count',
-	},
-	aliases: {
-		'i': 'id',
-		'n': 'num',
-		'p': 'post',
-		'v': 'verbose'
-	},
-	help: {
-		'id': 'use item id(s) for request',
-		'num': 'number of items to retrieve',
-		'post': 'send POST request instead of GET',
-		'verbose': 'show parsed request parameters'
-	},
-	strict: {
+    'post': 'bool',
+    'user-id': 'string',
+    'verbose': 'count',
+  },
+  aliases: {
+    'd': 'default-user',
+    'i': 'id',
+    'n': 'num',
+    'p': 'post',
+    'u': 'user-id',
+    'v': 'verbose'
+  },
+  help: {
+    'default-user': 'use default user for request',
+    'id': 'use item id(s) for request',
+    'num': 'number of items to retrieve',
+    'post': 'send POST request instead of GET',
+    'user-id': 'use this user id for request',
+    'verbose': 'show parsed request parameters'
+  },
+  strict: {
     named: true,
     unnamed: false,
     unknown: false,
-	  invalid: true
-	},
-	usage: 'Usage: $1 [OPTIONS...] <PATH> <DEST>\nParse args and display, with PATH and DEST as just...things'
+    invalid: true
+  },
+  usage: 'Usage: $1 [OPTIONS...] <PATH> <DEST>\nParse args and display, with PATH and DEST as just...things'
 }).parse();
 
 console.log('Args:', parsed);
@@ -93,14 +105,15 @@ console.log('Overflow:', parsed['--']);
 
 Try it:
 ```bash
-parse.js beep -vv boop --id=5,10 wiki --post -n 654654 --wakka blam -- next -k
+parse.js beep -vv boop --user-id charlie --id=5,10 wiki --post -n 654 --wakka blam -- next -k
 ```
 You should get:
 ```
 Args: { verbose: 2,
   id: [ '5', '10' ],
   post: true,
-  num: '654654',
+  num: '654',
+  userId: 'charlie',
   path: 'beep',
   dest: 'boop' }
 Unnamed: [ 'wiki' ]
@@ -118,11 +131,13 @@ Usage: parse.js [OPTIONS...] <PATH> <DEST>
 Parse args and display, with PATH and DEST as just...things
 
 Options:
-  -h, --help     show this help message and exit
-  -i, --id <id>  use item id(s) for request
-  -n, --num <n>  number of items to retrieve
-  -p, --post     send POST request instead of GET
-  -v, --verbose  show parsed request parameters
+  -d, --default-user  use default user for request
+  -h, --help          show this help message and exit
+  -i, --id <id>       use item id(s) for request
+  -n, --num <n>       number of items to retrieve
+  -p, --post          send POST request instead of GET
+  -u, --user-id <x>   use this user id for request
+  -v, --verbose       show parsed request parameters
 ```
 
 ## Returned object
@@ -141,6 +156,10 @@ Options not given on the command line are not present as properties in `parsed`.
 
 Full options are given with a `--` prefix, as in `--option`. Options of type `bool` and `count` consume no additional arguments, where `string` and `array` options consume the next non-hyphenated argument as their value (`--option value` for strings, or `--option value1 --option value2` for arrays), or can be given in contiguous form using '=' (as in `--option=value` for strings, or `--option=value1,value2` for arrays). By default, unknown options are considered strings, and are converted to arrays if given multiple times.
 
+You can specify a string or array option as `[optionType, paramName]` in `options()`, and the generated help text will use `paramName` in the option description, as in `--option <paramName>`. If `paramName` is not given, 'x' will be used. (See the example above.)
+
 Short options, as in `-o`, are accepted if there is a corresponding entry in `aliases()`. Bool and count options can be combined, as in `-bcc`. String and array options consume the next non-hyphenated argument (`-o value` for strings, `-o value1 -o value2` for arrays). Note: short options cannot use the '=' syntax, so `-o=value` is invalid.
+
+Compound options (those with a '-' in their name) are by default converted to camelCase properties of `parsed`. You can also specify 'snake_case' or 'none' by calling `compound('snake_case')` or specifying `compound: 'snake_case'` in the configuration object.
 
 ## Have fun (and stop writing argument parsers)!
