@@ -17,6 +17,7 @@ function Arghs (config) {
 
 	// Internal storage
 	this._options = {};
+	this._onames = {};
 	this._pnames = {};
 	this._compound = camelCaser;
 	this._aliases = {};
@@ -44,6 +45,15 @@ function Arghs (config) {
 }
 
 Arghs.prototype.option = function (optname, opttype, paramname) {
+	if (this._compound) {
+		var oname = this._compound(optname);
+		if (this._options.hasOwnProperty(oname)) {
+			throw new Error("Option '" + optname + "'' is a compound-cased duplicate of '" + oname + "'");
+		}
+		if (oname != optname) {
+			this._onames[optname] = oname;
+		}
+	}
 	var pname = false;
 	switch (opttype) {
 		case 'bool':
@@ -71,7 +81,7 @@ Arghs.prototype.option = function (optname, opttype, paramname) {
 
 Arghs.prototype.options = function (optionobj) {
 	if (optionobj !== null && typeof optionobj === 'object') {
-		var optlist = Object.keys(optionobj);
+		var optlist = Object.keys(optionobj).sort().reverse();
 		for (var i = 0; i < optlist.length; i++) {
 			var optname = optlist[i];
 			var option = optionobj[optname];
