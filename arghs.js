@@ -17,7 +17,6 @@ function Arghs (config) {
 
 	// Internal storage
 	this._options = {};
-	this._onames = {};
 	this._pnames = {};
 	this._compound = camelCaser;
 	this._aliases = {};
@@ -49,9 +48,6 @@ Arghs.prototype.option = function (optname, opttype, paramname) {
 		var oname = this._compound(optname);
 		if (this._options.hasOwnProperty(oname)) {
 			throw new Error("Option '" + optname + "'' is a compound-cased duplicate of '" + oname + "'");
-		}
-		if (oname != optname) {
-			this._onames[optname] = oname;
 		}
 	}
 	var pname = false;
@@ -332,7 +328,7 @@ Arghs.prototype.parse = function (argv) {
 	Object.defineProperty(parsed, '--',  { value: [] });
 
 	// Slice and dice
-	var arg, opt, err;
+	var arg, opt, err, name;
 	while (args.length > 0) {
 		arg = args.shift();
 		opt = undefined;
@@ -379,39 +375,44 @@ Arghs.prototype.parse = function (argv) {
 			continue;
 		}
 
+		// Check for option=value
+		var idx = arg.indexOf('=');
+
+		if (idx >= 0) {
+			opt = arg.substr(idx + 1).split(',');
+			if (opt.length <= 1) {
+				opt = opt[0];	// Will be undefined if 0-length
+			}
+			arg = arg.substr(0, idx);
+		}
+		// Consume additional arg
+		else if (args.length > 0) {
+			opt = args.shift();
+			if (opt.startsWith('-')) {
+				// Put back additional arg
+				args.unshift(opt);
+				opt = undefined;
+			}
+		}
+
+		// Get name to store value under
+		name = this._compound ? this._compound(arg) : arg;
 		// Check for switch or option
 		if (this._options[arg] === OPT_BOOL) {
 			// Multiple invocations get overwritten
-			if (parsed[arg]) {
+			if (parsed[name]) {
 				err = 'Multiple invocation of boolean option: --' + arg;
 				if (this._strict.invalid) {
 					this.exitWith(err);
 				}
-				parsed['?'][arg] = err;
+				parsed['?'][name] = err;
 			}
-			parsed[arg] = true;
+			parsed[name] = true;
 		}
 		else if (this._options[arg] === OPT_COUNT) {
-			parsed[arg] = (parsed[arg]) ? parsed[arg] + 1 : true;
+			parsed[name] = (parsed[name]) ? parsed[name] + 1 : true;
 		}
 		else {
-			// Check for option=value
-			var idx = arg.indexOf('=');
-
-			if (idx >= 0) {
-				opt = arg.substr(idx + 1).split(',');
-				arg = arg.substr(0, idx);
-			}
-			// Consume additional arg
-			else if (args.length > 0) {
-				opt = args.shift();
-				if (opt.startsWith('-')) {
-					// Put back additional arg
-					args.unshift(opt);
-					opt = undefined;
-				}
-			}
-
 			// Strict mode check
 			if (this._strict.unknown && !(this._options.hasOwnProperty(arg))) {
 				this.exitWith('Unknown option: --' + arg);
@@ -423,25 +424,25 @@ Arghs.prototype.parse = function (argv) {
 					// Multiple options get stored as array regardless
 					opt = (Array.isArray(opt)) ? opt : [opt];
 					for (var i = 0; i < opt.length; i++) {
-						if (Array.isArray(parsed[arg])) {
-							parsed[arg].push(opt[i]);
+						if (Array.isArray(parsed[name])) {
+							parsed[name].push(opt[i]);
 						}
 						else {
-							parsed[arg] = [opt[i]];
+							parsed[name] = [opt[i]];
 						}
 					}
 				}
 				else if (this._options[arg] === OPT_STRING) {
 					// Multiple occurences of single options get overwritten
-					if (Array.isArray(opt) || parsed[arg]) {
+					if (Array.isArray(opt) || parsed[name]) {
 						err = 'Multiple values for single option: --' + arg;
 						if (this._strict.invalid) {
 							this.exitWith(err);
 						}
-						parsed['?'][arg] = err;
+						parsed['?'][name] = err;
 						opt = (Array.isArray(opt)) ? opt[opt.length - 1] : opt;
 					}
-					parsed[arg] = opt;
+					parsed[name] = opt;
 				}
 				else {
 					if (this._strict.unknown) {
@@ -450,14 +451,14 @@ Arghs.prototype.parse = function (argv) {
 					// Multiple occurences of unknown options get stored as array
 					opt = (Array.isArray(opt)) ? opt : [opt];
 					for (var i = 0; i < opt.length; i++) {
-						if (Array.isArray(parsed.$[arg])) {
-							parsed.$[arg].push(opt[i]);
+						if (Array.isArray(parsed.$[name])) {
+							parsed.$[name].push(opt[i]);
 						}
-						else if (parsed.$[arg]) {
-							parsed.$[arg] = [parsed.$[arg], opt[i]];
+						else if (parsed.$[name]) {
+							parsed.$[name] = [parsed.$[name], opt[i]];
 						}
 						else {
-							parsed.$[arg] = opt[i];
+							parsed.$[name] = opt[i];
 						}
 					}
 				}
@@ -468,30 +469,7 @@ Arghs.prototype.parse = function (argv) {
 				if (this._strict.invalid) {
 					this.exitWith(err);
 				}
-				parsed['?'][arg] = err;
-			}
-		}
-	}
-
-	// Fixup compound options
-	if (this._compound) {
-		var str;
-		var opts = Object.keys(this._options);
-		for (var i = 0; i < opts.length; i++) {
-			opt = opts[i];
-			str = this._compound(opt);
-			if (str !== opt && parsed.hasOwnProperty(opt)) {
-				parsed[str] = parsed[opt];
-				delete parsed[opt];
-			}
-		}
-		opts = Object.keys(parsed.$);
-		for (var i = 0; i < opts.length; i++) {
-			opt = opts[i];
-			str = this._compound(opt);
-			if (str !== opt) {
-				parsed.$[str] = parsed.$[opt];
-				delete parsed.$[opt];
+				parsed['?'][name] = err;
 			}
 		}
 	}
