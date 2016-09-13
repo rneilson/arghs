@@ -17,6 +17,7 @@ function Arghs (config) {
 
 	// Internal storage
 	this._options = {};
+	this._pnames = {};
 	this._aliases = {};
 	this._named = [];
 	this._usage = '';
@@ -41,7 +42,8 @@ function Arghs (config) {
 	}
 }
 
-Arghs.prototype.option = function (optname, opttype) {
+Arghs.prototype.option = function (optname, opttype, paramname) {
+	var pname = false;
 	switch (opttype) {
 		case 'bool':
 			this._options[optname] = OPT_BOOL;
@@ -51,12 +53,17 @@ Arghs.prototype.option = function (optname, opttype) {
 			break;
 		case 'string':
 			this._options[optname] = OPT_STRING;
+			pname = true;
 			break;
 		case 'array':
 			this._options[optname] = OPT_ARRAY;
+			pname = true;
 			break;
 		default:
 			throw new Error("Unknown option type for " + optname + ": " + opttype);
+	}
+	if (pname) {
+		this._pnames[optname] = paramname || 'x';
 	}
 	return this;
 }
@@ -66,7 +73,13 @@ Arghs.prototype.options = function (optionobj) {
 		var optlist = Object.keys(optionobj);
 		for (var i = 0; i < optlist.length; i++) {
 			var optname = optlist[i];
-			this.option(optname, optionobj[optname]);
+			var option = optionobj[optname];
+			if (Array.isArray(option)) {
+				this.option(optname, option[0], option[1]);
+			}
+			else {
+				this.option(optname, option);
+			}
 		}
 		return this;
 	}
@@ -162,7 +175,7 @@ Arghs.prototype._makeHelp = function (descobj) {
 	var helpstr = 'Options:\n';
 	var aliases = {};
 	var lines = [];
-	var opt, str, keys, i;
+	var opt, ostr, str, keys, i;
 
 	// First create reverse mapping of options -> aliases
 	keys = Object.keys(this._aliases);
@@ -177,11 +190,16 @@ Arghs.prototype._makeHelp = function (descobj) {
 	// Now add options to output array
 	for (i = 0; i < keys.length; i++) {
 		opt = keys[i];
+		ostr = opt;
+		// Add parameter name if string/array
+		if (this._options[opt] === OPT_STRING || this._options[opt] === OPT_ARRAY) {
+			ostr += ' <' + this._pnames[opt] + '>';
+		}
 		if (aliases.hasOwnProperty(opt)) {
-			str = prefix + '-' + aliases[opt] + ', --' + opt;
+			str = prefix + '-' + aliases[opt] + ', --' + ostr;
 		}
 		else {
-			str = prefix + '    --' + opt;
+			str = prefix + '    --' + ostr;
 		}
 		// Get max length for descriptions later
 		maxlen = str.length > maxlen ? str.length : maxlen;
