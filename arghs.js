@@ -18,6 +18,7 @@ function Arghs (config) {
 	// Internal storage
 	this._options = {};
 	this._pnames = {};
+	this._compound = camelCaser;
 	this._aliases = {};
 	this._named = [];
 	this._usage = '';
@@ -131,6 +132,22 @@ Arghs.prototype.aliases = function (aliasobj) {
 	}
 	else {
 		throw new Error("'aliases' must be an object");
+	}
+}
+
+Arghs.prototype.compound = function (caser) {
+	switch(caser) {
+		case 'camelCase':
+			this._compound = camelCaser;
+			break;
+		case 'snake_case':
+			this._compound = snake_caser;
+			break;
+		case 'none':
+			this._compound = null;
+			break;
+		default:
+			throw new Error("'compound' must be one of 'camelCase', 'snake_case', or 'none'");
 	}
 }
 
@@ -446,17 +463,41 @@ Arghs.prototype.parse = function (argv) {
 		}
 	}
 
+	// Fixup compound options
+	if (this._compound) {
+		var str;
+		var opts = Object.keys(this._options);
+		for (var i = 0; i < opts.length; i++) {
+			opt = opts[i];
+			str = this._compound(opt);
+			if (str !== opt && parsed.hasOwnProperty(opt)) {
+				parsed[str] = parsed[opt];
+				delete parsed[opt];
+			}
+		}
+		opts = Object.keys(parsed.$);
+		for (var i = 0; i < opts.length; i++) {
+			opt = opts[i];
+			str = this._compound(opt);
+			if (str !== opt) {
+				parsed.$[str] = parsed.$[opt];
+				delete parsed.$[opt];
+			}
+		}
+	}
+
 	// Set named args
 	arg = 0;
-	for (var j = 0; j < this._named.length; j++) {
+	for (var i = 0; i < this._named.length; i++) {
+		var name = this._compound ? this._compound(this._named[i]) : this._named[i];
 		if (parsed._.length > 0) {
 			// Pull named arg from positional args, put in parsed object
-			parsed[this._named[j]] = parsed._.shift();
+			parsed[name] = parsed._.shift();
 			arg++;
 		}
 		else {
 			// Explicitly include named args in parsed object
-			parsed[this._named[j]] = undefined;
+			parsed[name] = undefined;
 		}
 	}
 
@@ -476,6 +517,30 @@ Arghs.prototype.parse = function (argv) {
 	}
 
 	return parsed;
+}
+
+function camelCaser (str) {
+	var pcs = str.split('-');
+	if (pcs.length < 2) {
+		return str;
+	}
+	for (var i = 1; i < pcs.length; i++) {
+		var s = pcs[i];
+		pcs[i] = s.charAt(0).toLocaleUpperCase() + s.slice(1).toLocaleLowerCase();
+	}
+	return pcs.join('');
+}
+
+function snake_caser (str) {
+	var pcs = str.split('-');
+	if (pcs.length < 2) {
+		return str;
+	}
+	for (var i = 1; i < pcs.length; i++) {
+		var s = pcs[i];
+		pcs[i] = s.charAt(0).toLocaleLowerCase() + s.slice(1);
+	}
+	return pcs.join('_');
 }
 
 module.exports = Arghs;
