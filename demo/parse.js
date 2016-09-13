@@ -9,7 +9,7 @@ var parsed = require('../../arghs')({
     'num': ['string', 'n'],
     'post': 'bool',
     'user-id': 'string',
-    'verbose': 'count',
+    'verbose': 'count'
   },
   aliases: {
     'd': 'default-user',
