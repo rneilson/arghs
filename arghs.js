@@ -276,10 +276,10 @@ Arghs.prototype.strict = function (restrict) {
 	else if (restrict === null || typeof restrict !== 'object') {
 		throw new Error("'strict' must be an object or undefined");
 	}
-	this._strict.named = (restrict.named === true) ? true : false;
-	this._strict.unnamed = (restrict.unnamed === true) ? true : false;
-	this._strict.unknown = (restrict.unknown === true) ? true : false;
-	this._strict.invalid = (restrict.invalid === true) ? true : false;
+	this._strict.named = (restrict.named === true);
+	this._strict.unnamed = (restrict.unnamed === true);
+	this._strict.unknown = (restrict.unknown === true);
+	this._strict.invalid = (restrict.invalid === true);
 	return this;
 }
 
