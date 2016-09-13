@@ -328,10 +328,10 @@ Arghs.prototype.parse = function (argv) {
 	Object.defineProperty(parsed, '--',  { value: [] });
 
 	// Slice and dice
-	var arg, opt, err, name;
+	var arg, val, err, name;
 	while (args.length > 0) {
 		arg = args.shift();
-		opt = undefined;
+		val = undefined;
 
 		// Check for long forms
 		if (arg.startsWith('--')) {
@@ -379,19 +379,19 @@ Arghs.prototype.parse = function (argv) {
 		var idx = arg.indexOf('=');
 
 		if (idx >= 0) {
-			opt = arg.substr(idx + 1).split(',');
-			if (opt.length <= 1) {
-				opt = opt[0];	// Will be undefined if 0-length
+			val = arg.substr(idx + 1).split(',');
+			if (val.length <= 1) {
+				val = val[0];	// Will be undefined if 0-length
 			}
 			arg = arg.substr(0, idx);
 		}
 		// Consume additional arg
 		else if (args.length > 0) {
-			opt = args.shift();
-			if (opt.startsWith('-')) {
+			val = args.shift();
+			if (val.startsWith('-')) {
 				// Put back additional arg
-				args.unshift(opt);
-				opt = undefined;
+				args.unshift(val);
+				val = undefined;
 			}
 		}
 
@@ -419,46 +419,46 @@ Arghs.prototype.parse = function (argv) {
 			}
 
 			// Store option in the right place
-			if (opt) {
+			if (val) {
 				if (this._options[arg] === OPT_ARRAY) {
 					// Multiple options get stored as array regardless
-					opt = (Array.isArray(opt)) ? opt : [opt];
-					for (var i = 0; i < opt.length; i++) {
+					val = (Array.isArray(val)) ? val : [val];
+					for (var i = 0; i < val.length; i++) {
 						if (Array.isArray(parsed[name])) {
-							parsed[name].push(opt[i]);
+							parsed[name].push(val[i]);
 						}
 						else {
-							parsed[name] = [opt[i]];
+							parsed[name] = [val[i]];
 						}
 					}
 				}
 				else if (this._options[arg] === OPT_STRING) {
 					// Multiple occurences of single options get overwritten
-					if (Array.isArray(opt) || parsed[name]) {
+					if (Array.isArray(val) || parsed[name]) {
 						err = 'Multiple values for single option: --' + arg;
 						if (this._strict.invalid) {
 							this.exitWith(err);
 						}
 						parsed['?'][name] = err;
-						opt = (Array.isArray(opt)) ? opt[opt.length - 1] : opt;
+						val = (Array.isArray(val)) ? val[val.length - 1] : val;
 					}
-					parsed[name] = opt;
+					parsed[name] = val;
 				}
 				else {
 					if (this._strict.unknown) {
 						this.exitWith('Unknown option: --' + arg);
 					}
 					// Multiple occurences of unknown options get stored as array
-					opt = (Array.isArray(opt)) ? opt : [opt];
-					for (var i = 0; i < opt.length; i++) {
+					val = (Array.isArray(val)) ? val : [val];
+					for (var i = 0; i < val.length; i++) {
 						if (Array.isArray(parsed.$[name])) {
-							parsed.$[name].push(opt[i]);
+							parsed.$[name].push(val[i]);
 						}
 						else if (parsed.$[name]) {
-							parsed.$[name] = [parsed.$[name], opt[i]];
+							parsed.$[name] = [parsed.$[name], val[i]];
 						}
 						else {
-							parsed.$[name] = opt[i];
+							parsed.$[name] = val[i];
 						}
 					}
 				}
